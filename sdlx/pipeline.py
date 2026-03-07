@@ -128,12 +128,10 @@ class VActSDLXPipeline:
             fp_mode = model_config.get("fp", "fp16")
             torch_dtype = self.map_dtype.get(fp_mode, torch.float16)
             _type = model_config["type"]
-            if _type in {"text_encoder"}:
-                text_encoder = CLIPTextModel.from_pretrained(
-                    model_config["repo_id"],
-                    model_config
-                    )
-            elif _type in {"controlnet"}:
+            repo_id = model_config.get("repo_id")
+            if repo_id and _type in {"text_encoder"}:
+                text_encoder = CLIPTextModel.from_pretrained(repo_id, token=api_key)
+            elif repo_id and _type in {"controlnet"}:
                 pass
             elif _type in {"checkpoint"}:
                 base_model_path = model_config["local_path"]
@@ -141,19 +139,27 @@ class VActSDLXPipeline:
                 mode = settings.mode_override if settings.mode_override else model_config.get("mode", "i2t")
                 mode = mode if not settings.input else "i2t"
                 
+                # TODO use from_pretrained on general model and api_key
+
                 device = settings.device_override if settings.device_override else model_config.get("device", None)
                 if mode in {'i2i'}:
-                    pipe = StableDiffusionXLImg2ImgPipeline.from_single_file(
-                        base_model_path, 
-                        torch_dtype=torch_dtype,
-                        text_encoder=text_encoder
-                    ).to(device)
+                    if repo_id:
+                        pipe = StableDiffusionXLImg2ImgPipeline.from_pretrained(model_config["repo_id"], token=api_key)
+                    else:
+                        pipe = StableDiffusionXLImg2ImgPipeline.from_single_file(
+                            base_model_path, 
+                            torch_dtype=torch_dtype,
+                            text_encoder=text_encoder
+                        ).to(device)
                 else:
-                    pipe = StableDiffusionXLPipeline.from_single_file(
-                        base_model_path, 
-                        torch_dtype=torch_dtype,
-                        text_encoder=text_encoder
-                    ).to(device)
+                    if repo_id:
+                        pipe = StableDiffusionXLPipeline.from_pretrained(model_config["repo_id"], token=api_key)
+                    else:
+                        pipe = StableDiffusionXLPipeline.from_single_file(
+                            base_model_path, 
+                            torch_dtype=torch_dtype,
+                            text_encoder=text_encoder
+                        ).to(device)
             elif _type in {"lora"}:
                 if pipe is None:
                     raise RuntimeError("cannot load LoRA before any checkpoint is loaded")
