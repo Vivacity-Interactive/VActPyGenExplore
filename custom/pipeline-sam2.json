@@ -1,0 +1,16 @@
+{
+  "title": "Segment Everyting 2 Pipeline",
+  "description": "",
+  "name": "sam2_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "sam2_xl",
+      "repo_id": "facebook/sam2-hiera-large",
+      "fp": "bf16",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}

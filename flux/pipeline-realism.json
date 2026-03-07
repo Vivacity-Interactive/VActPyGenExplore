@@ -1,0 +1,16 @@
+{
+  "title": "Realism Pipeline",
+  "description": "",
+  "name": "cineanim_pipeline",
+  "type": "flux",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "flux_2_klein_9b",
+      "url": "black-forest-labs/FLUX.2-klein-9B",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer",
+      "mode": "i2i"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Realism Pipeline",
+  "description": "",
+  "name": "realism_pipeline",
+  "type": "sdxl",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "intorealism_xl",
+      "url": "https://civitai.com/api/download/models/2650268?type=Model&format=SafeTensor&size=full&fp=fp16",
+      "fp": "fp16",
+      "api_key_var": "CIVITAI_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}

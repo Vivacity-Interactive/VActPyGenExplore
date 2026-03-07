@@ -1,0 +1,20 @@
+--extra-index-url https://download.pytorch.org/whl/cu130
+
+torch>=2.10.0
+torchvision
+torchaudio
+xformers
+triton
+
+safetensors
+accelerate
+transformers
+xformers
+huggingface_hub>=1.4.1
+diffusers>=0.36.0
+
+requests
+tqdm
+Pillow
+peft
+opencv-python

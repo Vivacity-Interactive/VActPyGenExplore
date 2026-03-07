@@ -1,0 +1,19 @@
+{
+  "title": "Felt Pipeline",
+  "description": "",
+  "name": "felt_pipeline",
+  "type": "sdxl",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "sdxl_base_1.0",
+      "url": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors",
+      "mode": "i2i"
+    },
+    {
+      "type": "lora",
+      "name": "sand_stone_xl",
+      "url": "https://civitai.com/api/download/models/129925?type=Model&format=SafeTensor"
+    }
+  ]
+}
