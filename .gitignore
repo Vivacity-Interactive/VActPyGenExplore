@@ -235,6 +235,8 @@ __marimo__/
 !/**/*.vson
 !/**/*.md
 !/**/*.important
+!/**/*.bjson
+!/**/*.bvson
 #!/**/*.in
 #!/**/*.ascii
 #!/**/*.csv

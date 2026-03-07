@@ -385,18 +385,18 @@ class VActPromptHandle:
             or cv2.getWindowProperty(self.name, cv2.WND_PROP_VISIBLE) < 1)
         
         if not self.b_exit:
-            if key == 2555904: #arrow-right
+            if key == 2555904 or key == ord('d') or key == ord('D'): #right
                 self.b_propagate = self.b_secondary
                 self.frame_idx += 1
                 self.b_dirty = True
-            elif key == 2424832: #arrow-left
+            elif key == 2424832 or key == ord('a') or key == ord('A'): #left
                 self.b_propagate = self.b_secondary
                 self.frame_idx -= 1 
                 self.b_dirty = True
-            elif key == 2490368: #arrow-up
+            elif key == 2490368 or key == ord('w') or key == ord('W'): #up
                 self.object_idx += 1
                 self.b_dirty = True
-            elif key == 2621440: #arrow-down
+            elif key == 2621440 or key == ord('s') or key == ord('S'): #down
                 self.object_idx -= 1
                 self.b_dirty = True
             elif key == 13: #enter
@@ -429,7 +429,7 @@ class VActPromptHandle:
                 self.blend = 1.0 if self.b_secondary else round(min(1.0, self.blend + .01), 2)
                 self.b_dirty = True
             elif key >= ord('0') and key <= ord('9'):
-                object_idx = key - ord('0')
+                self.object_idx = key - ord('0')
                 self.b_dirty = True
     
         return not self.b_exit
