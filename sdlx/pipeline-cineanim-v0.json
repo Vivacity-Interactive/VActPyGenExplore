@@ -5,6 +5,14 @@
   "type": "sdxl",
   "models": [
     {
+      "type": "text_encoder",
+      "name": "text_umt5_encoder",
+      "repo_id": "purplesmartai/pony-v7-base/",
+      "fp": "fp16",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    },
+    {
       "type": "checkpoint",
       "name": "pony_base_v7",
       "repo_id": "purplesmartai/pony-v7-base/",
