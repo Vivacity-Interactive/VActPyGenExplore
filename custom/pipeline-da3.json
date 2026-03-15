@@ -1,0 +1,16 @@
+{
+  "title": "Depth Anything 2 Pipeline",
+  "description": "",
+  "name": "da3_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "da3_xl",
+      "repo_id": "depth-anything/DA3NESTED-GIANT-LARGE",
+      "fp": "fp32",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}

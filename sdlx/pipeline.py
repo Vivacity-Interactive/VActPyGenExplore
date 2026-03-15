@@ -138,8 +138,6 @@ class VActSDLXPipeline:
                 
                 mode = settings.mode_override if settings.mode_override else model_config.get("mode", "i2t")
                 mode = mode if not settings.input else "i2t"
-                
-                # TODO use from_pretrained on general model and api_key
 
                 device = settings.device_override if settings.device_override else model_config.get("device", None)
                 if mode in {'i2i'}:

@@ -1,5 +1,4 @@
-import torch, torchvision, sys, cv2, json, os, uuid, math
-from datetime import datetime
+import torch, sys, cv2, json, os, math
 from pathlib import Path
 from tqdm import tqdm
 from sam2.sam2_video_predictor import SAM2VideoPredictor
@@ -18,8 +17,10 @@ class Settings(VActSettingsBase):
         self.objects = []
         self.begin = 0
         self.segment = "mask" # mask|color
-        self.output_hints = "../_out/video/{name}_hints.json"
-        self.input_hints = "../_in/video/{name}_hints.json"
+        self.output_hints = "../_out/video/{name}{variant}_hints.json"
+        self.input_hints = "../_in/video/{name}{variant}_hints.json"
+        self.load_hints = True
+        self.variant = ""
 
 class VActSAMPipeline(VActPipelineBase):
     def __init__(self):
@@ -73,11 +74,13 @@ class VActSAMPipeline(VActPipelineBase):
         #     if not repro:
         #         self.model_resolve(model_config, "pt", "yaml", "ascii", settings)
 
-        _input = Path(self.format_input(settings.input, settings.name))
-        _input_hints = Path(self.format_input(settings.input_hints, settings.name))
+        #settings.output_name = settings.output_name or settings.name
+        _input = Path(self.format_input(settings.input, settings.name, settings.variant))
+        _input_hints = Path(self.format_input(settings.input_hints, settings.name, settings.variant))
 
         hint_config = {}
-        if _input_hints.is_file():
+        if settings.load_hints and _input_hints.is_file():
+            print(_input_hints)
             with open(_input_hints) as file:
                 hint_config = json.load(file)
         
@@ -198,8 +201,8 @@ class VActSAMPipeline(VActPipelineBase):
 
 
                     handle.close()
-                    output = self.format_output(settings.output, settings.name, pipe_index)
-                    output_hints = self.format_output(settings.output_hints, settings.name, pipe_index)
+                    output = self.format_output(settings.output, settings.name, settings.variant, pipe_index).replace("{data}", "_mask")
+                    output_hints = self.format_output(settings.output_hints, settings.name, settings.variant, pipe_index)
 
                     with open(output_hints, "w") as file:
                         json.dump({

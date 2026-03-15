@@ -1,4 +1,4 @@
-import json, argparse, requests, torch, uuid, base64, os, sys, math, cv2, time, keyboard, uuid
+import json, argparse, requests, torch, uuid, base64, os, math, cv2, time, keyboard, uuid
 from datetime import datetime
 from pathlib import Path
 from tqdm import tqdm
@@ -13,7 +13,7 @@ from collections import defaultdict
 class VActSettingsBase:
     def __init__(self):
         self.config = "pipeline.json"
-        self.output = "../_out/video/{name}/{frame}_{name}.png"
+        self.output = "../_out/video/{name}{data}{variant}/{name}{data}{variant}_{frame}.png"
         self.name = "unknown"
         self.informat = "rgb"
         self.input = ""
@@ -86,17 +86,52 @@ class VActPipelineBase:
             "cx128": torch.complex128
         }
 
-    def format_input(self, input, name, pipe = -1, index = -1):
+    def resolve_hue(obj_id, object_count):
+        return int(255 * (obj_id % object_count) / max(object_count-1, 1))
+
+    def model_resolve(self, model_config, model_format, config_format, settings):
+        model_dir = Path(f"{settings.base_path}/{model_config["type"]}")
+
+        auth_type = model_config.get("auth_type")
+        api_key_var = model_config.get("api_key_var")
+        api_user_var = model_config.get("api_user_var")
+        api_key = os.getenv(api_key_var) if api_key_var else None
+        api_user = os.getenv(api_user_var) if api_user_var else None
+
+        url = model_config.get("url")
+
+        if url:
+            model_config["local_path"] = self.try_download(
+                model_config["url"], model_dir / f"{model_config['name']}.{model_format}",
+                auth_type, api_key, api_user,
+                settings.redownload
+            )
+            url_config = model_config.get("url_config")
+            if url_config:
+                model_config["config_path"] = self.try_download(
+                    model_config["url"], model_dir / f"{model_config['name']}.{config_format}",
+                    auth_type, api_key, api_user,
+                    settings.redownload
+                )
+        else:
+            model_config["local_path"] = model_dir / f"{model_config['name']}.{model_format}"
+            model_config["config_path"] = model_dir / f"{model_config['name']}.{config_format}"
+
+        return model_config
+
+    def format_input(self, input, name, variant="", pipe = -1, data="", index = -1):
         return (input
             .replace("{name}", name)
+            .replace("{variant}", variant)
             .replace("{pipe}", str(pipe))
             .replace("{index}", str(index)))
 
-    def format_output(self, output, name, pipe = -1, index = -1):
+    def format_output(self, output, name, variant="", pipe = -1, data="", index = -1):
         return (output
             .replace("{uuid}", uuid.uuid4().hex[:8])
             .replace("{datetime}", datetime.now().strftime("%Y%m%d_%H%M%S"))
             .replace("{name}", name)
+            .replace("{variant}", variant)
             .replace("{pipe}", str(pipe))
             .replace("{index}", str(index)))
 
@@ -190,13 +225,13 @@ class VActPipelineBase:
 
 
 class VActPromptHandle:
-    def __init__(self, name, frames=[], files=[], hints={}, objects={"other":["other", [255,255,255]]}):
+    def __init__(self, name, frames=[], files=[], hints={}, objects=None):
         self.name = name or "Nameless"
         self.context = None
         self.frame_idx = 0
         self.object_idx = 0
         self.point_index = 0
-        self.objects = objects or {}
+        self.objects = objects or {"other":["other", [255,255,255]]}
         self.object_names = []
         self.hints = hints or {}
         self.frames = frames or []
