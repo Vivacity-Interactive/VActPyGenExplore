@@ -4,3 +4,15 @@
 [submodule "_build/depth-anything-3"]
 	path = _build/depth-anything-3
 	url = https://github.com/ByteDance-Seed/Depth-Anything-3.git
+[submodule "_build/_build/sam3"]
+	path = _build/_build/sam3
+	url = https://github.com/facebookresearch/sam3
+[submodule "_build/sam3"]
+	path = _build/sam3
+	url = https://github.com/facebookresearch/sam3
+[submodule "_build/_build/higgs-audio"]
+	path = _build/_build/higgs-audio
+	url = https://github.com/boson-ai/higgs-audio.git
+[submodule "_build/higgs-audio"]
+	path = _build/higgs-audio
+	url = https://github.com/boson-ai/higgs-audio.git

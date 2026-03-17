@@ -1,0 +1,16 @@
+{
+  "title": "Segment Anything 2 Pipeline",
+  "description": "",
+  "name": "sam2_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "sam2_xl",
+      "repo_id": "facebook/sam3",
+      "fp": "f32",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}
