@@ -1,0 +1,16 @@
+{
+  "title": "Parkiet Pipeline",
+  "description": "",
+  "name": "parkiet_jax_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "parkiet-jax",
+      "url": "https://huggingface.co/pevers/parkiet/resolve/main/dia-nl-v1.zip?download=true -O weights/dia-nl-v1.zip",
+      "fp": "fp32",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}

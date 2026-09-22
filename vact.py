@@ -437,8 +437,8 @@ class VActPromptHandle:
             elif key == 13: #enter
                 if not self.b_secondary:
                     self.b_propagate_hold = not self.b_propagate_hold
-                self.b_propagate = self.b_secondary
-                self.b_dirty = True
+                #self.b_propagate = self.b_secondary
+                    self.b_dirty = True
             elif key == 32: #space
                 self.b_pause = not self.b_pause
                 self.b_runtime = not self.b_pause and self.b_secondary

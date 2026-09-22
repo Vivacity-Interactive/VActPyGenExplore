@@ -16,3 +16,6 @@
 [submodule "_build/higgs-audio"]
 	path = _build/higgs-audio
 	url = https://github.com/boson-ai/higgs-audio.git
+[submodule "_build/parkiet"]
+	path = _build/parkiet
+	url = https://github.com/pevers/parkiet.git

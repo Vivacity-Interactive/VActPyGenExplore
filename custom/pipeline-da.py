@@ -17,9 +17,9 @@ class Settings(VActSettingsBase):
         self.begin = 0
         #self.output_meta = "../_out/video/{name}{variant}_meta.json"
         self.variant = ""
-        self.confidence = True
+        self.confidence = False
         self.meta = True
-        #self.process_res = 1024
+        self.process_res = 512
 
 class VActDAPipeline(VActPipelineBase):
     def __init__(self):
@@ -65,8 +65,8 @@ class VActDAPipeline(VActPipelineBase):
                 predictor  = DepthAnything3.from_pretrained(str(model_config["repo_id"]), token=api_key).to(device)
                 inference_state = predictor.inference(
                     image=frame_files,
-                    #process_res=504,
-                    #process_res_method="upper_bound_resize"
+                    process_res=1024,
+                    process_res_method="upper_bound_resize"
                 )
 
                 output = self.format_output(settings.output, settings.name, settings.variant, pipe_index)
@@ -76,7 +76,6 @@ class VActDAPipeline(VActPipelineBase):
                     _output = output.replace("{frame}", f"{_frame:04}")
                     
                     if depth_img is not None:
-                        #depth_img = (depth_data * 255).astype(np.uint8)
                         _output_depth = Path(_output.replace("{data}", "_depth"))
                         _frame_path = settings.base_path / _output_depth
                         _frame_path.parent.mkdir(parents=True, exist_ok=True)
@@ -84,7 +83,6 @@ class VActDAPipeline(VActPipelineBase):
                         print(b_frame_written, depth_img.shape, _frame_path.resolve())
                     
                     if settings.confidence and conf_img is not None:
-                        #conf_img = (conf_data * 255).astype(np.uint8)
                         _output_conf = Path(_output.replace("{data}", "_conf"))
                         _frame_path = settings.base_path / _output_conf
                         _frame_path.parent.mkdir(parents=True, exist_ok=True)

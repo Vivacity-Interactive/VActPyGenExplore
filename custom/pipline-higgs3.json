@@ -1,0 +1,16 @@
+{
+  "title": "Higgs Audio TTS Pipeline",
+  "description": "",
+  "name": "higgs3_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "higgs_audio",
+      "repo_id": "multimodalart/higgs-audio-v3-tts-4b-transformers",
+      "fp": "fp32",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}

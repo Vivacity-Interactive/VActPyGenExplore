@@ -1,0 +1,16 @@
+{
+  "title": "Parkiet Pipeline",
+  "description": "",
+  "name": "parkiet_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "parkiet",
+      "repo_id": "pevers/parkiet",
+      "fp": "fp32",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}
