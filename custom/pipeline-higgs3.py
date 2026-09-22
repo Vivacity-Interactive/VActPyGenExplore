@@ -1,8 +1,6 @@
-import torch, sys, json, os, soundfile, re, time
+import torch, sys, json, os, soundfile, time, torchaudio
 from pathlib import Path
-from transformers import AutoProcessor, DiaForConditionalGeneration
-import numpy as np
-from array import array
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import signal
 
@@ -22,10 +20,10 @@ class Settings(VActSettingsBase):
     def __init__(self):
         super().__init__()
         self.guidance = 3.0
-        self.temperature = 1.4
-        self.output = "../_out/audio/{stem}/{id}{data}{variant}.mp3"
+        self.temperature = 0.7
+        self.output = "../_out/audio/{stem}/higgs/{id}{data}{variant}.mp3"
         self.variant = "_saskia"
-        self.prompt = "[S2]"
+        self.prompt = "<|emotion:enthusiasm|>"
         self.ref_audio = ""
         self.ref_text = ""
         self.skip = -1
@@ -36,9 +34,10 @@ class Settings(VActSettingsBase):
         #self.chunks = True
         self.pause = 0.08
         self.merge = True
+        self.continuity = True
         self.sliding = False
 
-class VActParkietPipeline(VActPipelineBase):
+class VActHiggs3Pipeline(VActPipelineBase):
     def __init__(self):
         super().__init__()
 
@@ -75,21 +74,26 @@ class VActParkietPipeline(VActPipelineBase):
                 api_key_var = model_config.get("api_key_var")
                 api_key = os.getenv(api_key_var) if api_key_var else None
                 device = torch.device(device_type)
-                processor = AutoProcessor.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key)
-                predictor  = DiaForConditionalGeneration.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, torch_dtype=torch_dtype, token=api_key).to(device=device, dtype=torch_dtype)
+                tokenizer = AutoTokenizer.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key)
+                predictor  = AutoModelForCausalLM.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key).to(device)
 
-                sample_rate = processor.feature_extractor.sampling_rate
+                sample_rate = predictor.config.sample_rate
                 # silence = torch.zeros(
                 #     int(sample_rate * settings.pause),
                 #     dtype=torch.float32,
                 #     device=device
                 # )
                 
+                #con_audio = None
+                #con_text = None
                 ref_audio = None
                 ref_text = ""
                 _t0 = t0 = time.perf_counter()
                 if settings.ref_audio:
+                    #ref_audio, ref_sr = torchaudio.load(settings.ref_audio.replace("{variant}",settings.variant))
                     ref_audio, ref_sr = soundfile.read(settings.ref_audio.replace("{variant}",settings.variant), dtype="float32")
+                    ref_audio = torch.from_numpy(ref_audio)
+                    if ref_audio.ndim > 1: ref_audio = ref_audio.mean(dim=1)
                     ref_text = Path(settings.ref_text).read_text(encoding="utf-8").strip() + " "
 
                 output = self.format_output(settings.output, settings.name, settings.variant, pipe_index)
@@ -106,34 +110,26 @@ class VActParkietPipeline(VActPipelineBase):
 
                         text = entry[settings.text_attr] if b_json else entry
                         id = entry[settings.merge_attr] if b_json and settings.merge_attr else None
-
-                        inputs = processor(
-                            text=(settings.prompt + "\n\r" if settings.prompt else "") + ref_text + text,# + chunk,
-                            audio=ref_audio,
-                            padding='max_length',
-                            return_tensors="pt"
-                        ).to(device)
-
-                        prompt_len = processor.get_audio_prompt_len(
-                            inputs["decoder_attention_mask"]
-                        )
-
-                        # TODO maybe sliding frame pick a part of previous entry ending
                         
-                        outputs = predictor.generate(
-                            **inputs,
-                            max_new_tokens=3072,
-                            guidance_scale=settings.guidance,
+                        _audio = predictor.generate_speech(
+                            #text,
+                            (settings.prompt if settings.prompt else "") + text,
+                            tokenizer,
+                            reference_audio=ref_audio,
+                            reference_text=ref_text,
+                            reference_sample_rate=ref_sr,
                             temperature=settings.temperature,
-                            top_p=0.90,
-                            top_k=50,
+                            #continuity_reference = con_audio,
+                            #continuity_text = con_text
                         )
-                        _audio = processor.batch_decode(outputs, audio_prompt_len=prompt_len)
+
+                        #con_audio = _audio if settings.continuity else None
+                        #con_text = text if settings.continuity else None
 
                         b_write = (not settings.merge) or (settings.merge and ( (_index + 1) >= len(data) or data[_index + 1].get(settings.merge_attr) != id))
-                        if not b_write: _merge.append(_audio[0])
+                        if not b_write: _merge.append(_audio)
                         else:
-                            _merge.append(_audio[0])
+                            _merge.append(_audio)
                             audio = _audio if not settings.merge else torch.cat(_merge, dim=0)
                             _merge = []
                             _output = output.replace("{stem}", file_path.stem).replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
@@ -141,9 +137,9 @@ class VActParkietPipeline(VActPipelineBase):
                                 _output_vo = Path(_output.replace("{data}", "_vo"))
                                 _audio_path = settings.base_path / _output_vo
                                 _audio_path.parent.mkdir(parents=True, exist_ok=True)
-                                processor.save_audio(audio, _audio_path)
-                                _tn = time.perf_counter()
-                                print(True, len(audio), len(text), _tn - _t0, _audio_path.resolve())
+                                soundfile.write(_audio_path, audio.cpu().numpy(), sample_rate)
+                                _tn =  time.perf_counter()
+                                print(True, audio.shape, len(text), _tn - _t0, _audio_path.resolve())
                                 _t0 = _tn
                 print(_t0 - t0)
         return True
@@ -151,5 +147,5 @@ class VActParkietPipeline(VActPipelineBase):
 
 if __name__ == "__main__":
     settings = Settings()
-    pipeline = VActParkietPipeline()
+    pipeline = VActHiggs3Pipeline()
     pipeline.cmd_execute(settings)
