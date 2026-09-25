@@ -1,0 +1,15 @@
+{
+  "title": "Gemini Audio TTS Pipeline",
+  "description": "",
+  "name": "gemini_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "gemini_audio",
+      "client": "google",
+      "api_key_var": "GEMINI_API_KEY",
+      "auth_type": "client"
+    }
+  ]
+}

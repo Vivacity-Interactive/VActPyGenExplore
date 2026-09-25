@@ -29,11 +29,10 @@ class Settings(VActSettingsBase):
         self.ref_audio = ""
         self.ref_text = ""
         self.skip = -1
-        self.untill = -1
+        self.until = -1
         self.merge_attr = 'id'
         self.text_attr = 'text'
-        #self.split = '.?!\n\r'
-        #self.chunks = True
+        self.split = '\n\r'
         self.pause = 0.08
         self.merge = True
         self.sliding = False
@@ -101,7 +100,7 @@ class VActParkietPipeline(VActPipelineBase):
                     #_id = data[0].get(settings.merge_attr) if data and isinstance(data[0], dict) else None
                     _merge = []
                     for _index, entry in enumerate(data):
-                        b_skip = (settings.untill > 0 and _index > settings.untill) or settings.skip > _index
+                        b_skip = (settings.until > 0 and _index > settings.until) or settings.skip > _index
                         if b_skip: continue;
 
                         text = entry[settings.text_attr] if b_json else entry

@@ -1,6 +1,8 @@
-import torch, sys, json, os, soundfile, time, re
+import torch, sys, json, os, soundfile, time, re, base64, io
+import numpy as np
+
 from pathlib import Path
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from google import genai
 
 import signal
 
@@ -21,11 +23,11 @@ class Settings(VActSettingsBase):
         super().__init__()
         self.guidance = 3.0
         self.temperature = 0.7
-        self.output = "../_out/audio/{stem}/higgs/{id}{data}{variant}.mp3"
+        self.output = "../_out/audio/{stem}/gemini/{id}{data}{variant}.mp3"
         self.variant = "_saskia"
-        self.prompt = "<|emotion:enthusiasm|>"
+        self.prompt = "warm and conversational"
         self.ref_audio = ""
-        self.ref_text = ""
+        self.ref_consent = ""
         self.skip = -1
         self.untill = -1
         self.merge_attr = 'id'
@@ -35,10 +37,28 @@ class Settings(VActSettingsBase):
         self.merge = True
         self.continuity = True
         self.sliding = False
+        self.rate = 24000
+        self.voice_key = "Kore"
+        self.model = "gemini-3.8-flash-tts"
+        self.store_voice = False
+        self.store_data = False
+        self.trim_start = 384
+        self.trim_end = -3384
 
-class VActHiggs3Pipeline(VActPipelineBase):
+class VActGeminiPipeline(VActPipelineBase):
     def __init__(self):
         super().__init__()
+
+    # def wav_as_b64(self, filename, sr_expected):
+    #     data, sr = soundfile.read(filename, dtype="int16")
+    #     if sr != sr_expected: raise ValueError(f"{filename}: expected {sr_expected} Hz, got {sr}")
+    #     if data.ndim > 1: data = data.mean(dim=1)
+    #     _data = io.BytesIO()
+    #     soundfile.write(_data, data, sr, format="WAV", subtype="PCM_16")
+    #     return base64.b16encode(_data.getvalue()).decode("ascii"), sr
+
+    def wav_as_b64(self, filename, sr_expected):
+        with open(filename, "rb") as f: return base64.b64encode(f.read()).decode("utf-8"), sr_expected
 
     def execute(self, settings):
         with open(settings.config) as file:
@@ -72,11 +92,9 @@ class VActHiggs3Pipeline(VActPipelineBase):
             if _type in {"checkpoint"}:
                 api_key_var = model_config.get("api_key_var")
                 api_key = os.getenv(api_key_var) if api_key_var else None
-                device = torch.device(device_type)
-                tokenizer = AutoTokenizer.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key)
-                predictor  = AutoModelForCausalLM.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key).to(device)
+                predictor = genai.Client()
 
-                sample_rate = predictor.config.sample_rate
+                sample_rate = settings.rate
                 # silence = torch.zeros(
                 #     int(sample_rate * settings.pause),
                 #     dtype=torch.float32,
@@ -87,15 +105,32 @@ class VActHiggs3Pipeline(VActPipelineBase):
                 
                 #con_audio = None
                 #con_text = None
-                ref_audio = None
-                ref_text = ""
+                voice_key = settings.voice_key
                 _t0 = t0 = time.perf_counter()
                 if settings.ref_audio:
-                    #ref_audio, ref_sr = torchaudio.load(settings.ref_audio.replace("{variant}",settings.variant))
-                    ref_audio, ref_sr = soundfile.read(settings.ref_audio.replace("{variant}",settings.variant), dtype="float32")
-                    ref_audio = torch.from_numpy(ref_audio)
-                    if ref_audio.ndim > 1: ref_audio = ref_audio.mean(dim=1)
-                    ref_text = Path(settings.ref_text).read_text(encoding="utf-8").strip() + " "
+                    ref_audio, ref_sr = self.wav_as_b64(settings.ref_audio.replace("{variant}",settings.variant), settings.rate)
+                    ref_consent, refc_sr = self.wav_as_b64(settings.ref_consent.replace("{variant}",settings.variant), settings.rate)
+                    voice = predictor.voices.create(
+                        store=settings.store_voice,
+                        voice={
+                            "model": settings.model,
+                            "type": "replicated",
+                            "language_code": "nl-NL",
+                            "display_name": settings.variant.replace('_', " ").strip().title(),
+                            "replicated": {
+                                "source_audio": {
+                                    "mime_type": "audio/wav",
+                                    "data": ref_audio,
+                                },
+                                "consent_audio": {
+                                    "mime_type": "audio/wav",
+                                    "data": ref_consent,
+                                },
+                            },
+                        },
+                    )
+                    voice_key = voice.id if settings.store_voice else voice.key
+                    print(voice_key)
 
                 output = self.format_output(settings.output, settings.name, settings.variant, pipe_index)
                 for index, text_file in enumerate(text_files):
@@ -115,17 +150,22 @@ class VActHiggs3Pipeline(VActPipelineBase):
                         #chuncks = split.split(text)
                         #for index_, chunk in enumerate(chuncks):
                         
-                        _audio = predictor.generate_speech(
-                            #text,
-                            (settings.prompt if settings.prompt else "") + text,
-                            tokenizer,
-                            reference_audio=ref_audio,
-                            reference_text=ref_text,
-                            reference_sample_rate=ref_sr,
-                            temperature=settings.temperature,
-                            #continuity_reference = con_audio,
-                            #continuity_text = con_text
+                        response = predictor.interactions.create(
+                            model = settings.model,
+                            input = [{
+                                "type": "text",
+                                "text": text,
+                                "annotations": [{
+                                    "type": "speech_metadata",
+                                    "style": settings.prompt
+                                }] if settings.prompt else None
+                            }],
+                            response_format={"type": "audio"},
+                            generation_config={ "speech_config": [{"voice": voice_key }] },
+                            store=settings.store_data
                         )
+
+                        _audio = response.output_audio.data if response.output_audio else ""
 
                         #con_audio = _audio if settings.continuity else None
                         #con_text = text if settings.continuity else None
@@ -134,16 +174,19 @@ class VActHiggs3Pipeline(VActPipelineBase):
                         if not b_write: _merge.append(_audio)
                         else:
                             _merge.append(_audio)
-                            audio = _audio if not settings.merge else torch.cat(_merge, dim=0)
+                            audio = _audio if not settings.merge else "".join(_merge)
+                            audio = base64.b64decode(audio)
                             _merge = []
                             _output = output.replace("{stem}", file_path.stem).replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
                             if audio is not None:
                                 _output_vo = Path(_output.replace("{data}", "_vo"))
                                 _audio_path = settings.base_path / _output_vo
                                 _audio_path.parent.mkdir(parents=True, exist_ok=True)
-                                soundfile.write(_audio_path, audio.cpu().numpy(), sample_rate)
+                                pcm = np.frombuffer(audio, dtype=np.int16)
+                                if settings.trim_end or settings.trim_start: pcm = pcm[settings.trim_end:settings.trim_start]
+                                soundfile.write(_audio_path, pcm, sample_rate, format="MP3")
                                 _tn =  time.perf_counter()
-                                print(True, audio.shape, len(text), _tn - _t0, f"f({index}/{len(text_files)})",f"t({_index}/{len(data)})", _audio_path.resolve())
+                                print(True, len(audio), len(text), _tn - _t0, f"f({index}/{len(text_files)})",f"t({_index}/{len(data)})", _audio_path.resolve())
                                 _t0 = _tn
                 print(_t0 - t0)
         return True
@@ -151,5 +194,5 @@ class VActHiggs3Pipeline(VActPipelineBase):
 
 if __name__ == "__main__":
     settings = Settings()
-    pipeline = VActHiggs3Pipeline()
+    pipeline = VActGeminiPipeline()
     pipeline.cmd_execute(settings)
