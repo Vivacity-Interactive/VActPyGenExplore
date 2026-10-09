@@ -1,0 +1,27 @@
+[
+    {
+        "name": "Speaker_1",
+        "text": "Elke held begint eigenlijk met een probleem. Niet met een plan of met een enorme dosis wilskracht, maar met iets dat niet meer werkt.",
+        "prompt": "Warm, conversational, reflective podcast voice. Natural pace with gentle emphasis."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "Ja, en dat vind ik meteen een interessante manier om naar verandering te kijken. Want als je iets wilt veranderen en het lukt steeds niet, denk je al snel dat het aan jezelf ligt.",
+        "prompt": "Warm, empathetic conversational voice. Curious and engaged, with natural variation in rhythm."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Precies. Neem Merel. Ze heeft twee maanden geleden besloten dat ze iedere dag een half uur zou gaan lopen. Ze wilde het echt. Maar uiteindelijk heeft ze het maar drie keer gedaan.",
+        "prompt": "Natural storytelling voice, warm and lightly expressive. Emphasize the contrast between intention and action."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "En dan komt waarschijnlijk die bekende gedachte: zie je wel, ik kan het niet volhouden.",
+        "prompt": "Understanding and conversational, with a slight pause before the final phrase."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Ja. Terwijl Merel helemaal niet te weinig motivatie hoeft te hebben. Ze wil juist heel graag. Alleen, iedere keer als het moment komt, is er iets. Ze is moe, het regent, ze voelt zich niet goed. En dan denkt ze: ik doe het morgen.",
+        "prompt": "Warm narrative delivery, gently building toward the repeated thought. Natural pauses."
+    }
+]

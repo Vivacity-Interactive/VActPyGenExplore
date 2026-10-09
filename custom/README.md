@@ -12,3 +12,6 @@ Currently contains a minimal interface to navigate frames
 - `esc` to end session and write results
 
 this is a quick setup unpolished, system will writes hints away to be able to load again later, this initialization needs some improvement, but generaly working.
+
+## Gemini TTS
+Custom voices Mees voice_wejnkf7osuak and Eveline voice_9qsimytb9qxx

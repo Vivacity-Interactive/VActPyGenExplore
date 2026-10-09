@@ -23,7 +23,7 @@ class Settings(VActSettingsBase):
         super().__init__()
         self.guidance = 3.0
         self.temperature = 0.7
-        self.output = "../_out/audio/{stem}/gemini/{id}{data}{variant}.mp3"
+        self.output = "../_out/audio/{stem}/gemini/{variant}/{id}{data}{variant}.mp3"
         self.variant = "_saskia"
         self.prompt = "warm and conversational"
         self.ref_audio = ""
@@ -32,6 +32,8 @@ class Settings(VActSettingsBase):
         self.untill = -1
         self.merge_attr = 'id'
         self.text_attr = 'text'
+        self.prompt_attr = "prompt"
+        self.speaker_attr ="name"
         self.split = '\n\r'
         self.pause = 0.08
         self.merge = True
@@ -42,8 +44,11 @@ class Settings(VActSettingsBase):
         self.model = "gemini-3.8-flash-tts"
         self.store_voice = False
         self.store_data = False
-        self.trim_start = 384
-        self.trim_end = -3384
+        self.trim_start = 0.042 #1008#0.042 * 24000 #€4.78
+        self.trim_end = -0.142 #-3408#0.42 * 24000
+        self.lang = "nl-NL"
+        self.podcast = False
+        self.speakers = { "Speaker_1": "voice_9qsimytb9qxx", "Speaker_2": "voice_wejnkf7osuak" }
 
 class VActGeminiPipeline(VActPipelineBase):
     def __init__(self):
@@ -106,6 +111,7 @@ class VActGeminiPipeline(VActPipelineBase):
                 #con_audio = None
                 #con_text = None
                 voice_key = settings.voice_key
+                speaker_name = settings.variant.replace('_', " ").strip().title()
                 _t0 = t0 = time.perf_counter()
                 if settings.ref_audio:
                     ref_audio, ref_sr = self.wav_as_b64(settings.ref_audio.replace("{variant}",settings.variant), settings.rate)
@@ -115,8 +121,8 @@ class VActGeminiPipeline(VActPipelineBase):
                         voice={
                             "model": settings.model,
                             "type": "replicated",
-                            "language_code": "nl-NL",
-                            "display_name": settings.variant.replace('_', " ").strip().title(),
+                            "language_code": settings.lang,
+                            "display_name": speaker_name,
                             "replicated": {
                                 "source_audio": {
                                     "mime_type": "audio/wav",
@@ -130,7 +136,14 @@ class VActGeminiPipeline(VActPipelineBase):
                         },
                     )
                     voice_key = voice.id if settings.store_voice else voice.key
-                    print(voice_key)
+
+                _config = { "speech_config": [{"voice": voice_key }] }
+
+                if settings.podcast:
+                    _config = { "speech_config": {
+                        "mode": "conversational",
+                        "speakers": [ {"speaker": speaker, "voice": voice } for speaker, voice in settings.speakers.items() ] 
+                    } }
 
                 output = self.format_output(settings.output, settings.name, settings.variant, pipe_index)
                 for index, text_file in enumerate(text_files):
@@ -138,55 +151,83 @@ class VActGeminiPipeline(VActPipelineBase):
                     b_json = file_path.suffix.lower() == ".json"
                     _raw = file_path.read_text(encoding="utf-8").strip()
                     data = json.loads(_raw) if b_json else [_raw]
+                    if settings.podcast:
+                        data =  [[ {
+                                    "type": "text",
+                                    "text": turn[settings.text_attr],
+                                    "annotations": [{
+                                        "type": "speech_metadata",
+                                        "speaker": turn[settings.speaker_attr],
+                                        "style": turn[settings.prompt_attr]
+                                    }]
+                            } for turn in data ]]
+
                     #_id = data[0].get(settings.merge_attr) if data and isinstance(data[0], dict) else None
                     _merge = []
+                    _len = 0
                     for _index, entry in enumerate(data):
                         b_skip = (settings.untill > 0 and _index > settings.untill) or settings.skip > _index
                         if b_skip: continue;
 
-                        text = entry[settings.text_attr] if b_json else entry
-                        id = entry[settings.merge_attr] if b_json and settings.merge_attr else None
+                        id = entry[settings.merge_attr] if not settings.podcast and b_json and settings.merge_attr else None
+                        if settings.podcast:
+                            #content = entry[settings.content_attr] if b_json else entry
+                            _input = [{
+                                    "type": "user_input",
+                                    "content": entry
+                                }]
+                        else:
+                            text = entry[settings.text_attr] if b_json else entry
+                            _len += len(text)
 
-                        #chuncks = split.split(text)
-                        #for index_, chunk in enumerate(chuncks):
-                        
-                        response = predictor.interactions.create(
-                            model = settings.model,
-                            input = [{
+                            #chuncks = split.split(text)
+                            #for index_, chunk in enumerate(chuncks):
+                            _input = [{
                                 "type": "text",
                                 "text": text,
                                 "annotations": [{
                                     "type": "speech_metadata",
+                                    "speaker": speaker_name,
                                     "style": settings.prompt
                                 }] if settings.prompt else None
-                            }],
+                            }]
+
+                        #print(_input)
+                        #exit()
+                        
+                        response = predictor.interactions.create(
+                            model = settings.model,
+                            input = _input,
                             response_format={"type": "audio"},
-                            generation_config={ "speech_config": [{"voice": voice_key }] },
+                            generation_config=_config,
                             store=settings.store_data
                         )
 
                         _audio = response.output_audio.data if response.output_audio else ""
-
-                        #con_audio = _audio if settings.continuity else None
-                        #con_text = text if settings.continuity else None
-
+                        #audio_ = base64.b64decode(_audio)
+                        _pcm = np.frombuffer(base64.b64decode(_audio), dtype=np.int16)
+                        if settings.trim_end or settings.trim_start: _pcm = _pcm[int(settings.trim_start * settings.rate):int(settings.trim_end * settings.rate)]
+                        #print("_pcm:", type(_pcm), _pcm.ndim, _pcm.shape)
                         b_write = (not settings.merge) or (settings.merge and ( (_index + 1) >= len(data) or data[_index + 1].get(settings.merge_attr) != id))
-                        if not b_write: _merge.append(_audio)
+                        if not b_write: _merge.append(_pcm)
                         else:
-                            _merge.append(_audio)
-                            audio = _audio if not settings.merge else "".join(_merge)
-                            audio = base64.b64decode(audio)
+                            _merge.append(_pcm)
+                            #audio = _audio if not settings.merge else "".join(_merge)
+                            audio = _pcm if not settings.merge else np.concatenate(_merge)
+                            #audio = base64.b64decode(audio)
                             _merge = []
+                            _len = 0
                             _output = output.replace("{stem}", file_path.stem).replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
                             if audio is not None:
                                 _output_vo = Path(_output.replace("{data}", "_vo"))
                                 _audio_path = settings.base_path / _output_vo
                                 _audio_path.parent.mkdir(parents=True, exist_ok=True)
-                                pcm = np.frombuffer(audio, dtype=np.int16)
-                                if settings.trim_end or settings.trim_start: pcm = pcm[settings.trim_end:settings.trim_start]
-                                soundfile.write(_audio_path, pcm, sample_rate, format="MP3")
+                                #pcm = np.frombuffer(audio, dtype=np.int16)
+                                #if settings.trim_end or settings.trim_start: pcm = pcm[int(settings.trim_start * settings.rate):int(settings.trim_end * settings.rate)]
+                                #soundfile.write(_audio_path, pcm, sample_rate, format="MP3")
+                                soundfile.write(_audio_path, audio, sample_rate, format="MP3")
                                 _tn =  time.perf_counter()
-                                print(True, len(audio), len(text), _tn - _t0, f"f({index}/{len(text_files)})",f"t({_index}/{len(data)})", _audio_path.resolve())
+                                print(True, len(audio), _len, _tn - _t0, f"f({index}/{len(text_files)})",f"t({_index}/{len(data)})", _audio_path.resolve())
                                 _t0 = _tn
                 print(_t0 - t0)
         return True

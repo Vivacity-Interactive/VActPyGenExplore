@@ -1,0 +1,117 @@
+[
+    {
+        "name": "Speaker_1",
+        "text": "Elke held begint eigenlijk met een probleem. Niet met een plan of met een enorme dosis wilskracht, maar met iets dat niet meer werkt.",
+        "prompt": "Warm, conversational, reflective podcast voice. Natural pace with gentle emphasis."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "Ja, en dat vind ik meteen een interessante manier om naar verandering te kijken. Want als je iets wilt veranderen en het lukt steeds niet, denk je al snel dat het aan jezelf ligt.",
+        "prompt": "Warm, empathetic conversational voice. Curious and engaged, with natural variation in rhythm."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Precies. Neem Merel. Ze heeft twee maanden geleden besloten dat ze iedere dag een half uur zou gaan lopen. Ze wilde het echt. Maar uiteindelijk heeft ze het maar drie keer gedaan.",
+        "prompt": "Natural storytelling voice, warm and lightly expressive. Emphasize the contrast between intention and action."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "En dan komt waarschijnlijk die bekende gedachte: zie je wel, ik kan het niet volhouden.",
+        "prompt": "Understanding and conversational, with a slight pause before the final phrase."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Ja. Terwijl Merel helemaal niet te weinig motivatie hoeft te hebben. Ze wil juist heel graag. Alleen, iedere keer als het moment komt, is er iets. Ze is moe, het regent, ze voelt zich niet goed. En dan denkt ze: ik doe het morgen.",
+        "prompt": "Warm narrative delivery, gently building toward the repeated thought. Natural pauses."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "En dat 'morgen' wordt dan bijna een automatische reactie.",
+        "prompt": "Thoughtful, concise, with gentle emphasis on 'automatische reactie'."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Precies. Ze herkent die gedachte inmiddels al voordat hij helemaal gevormd is. En juist daar begint HERO.",
+        "prompt": "Confident but warm educational tone. Slight emphasis on 'daar begint HERO'."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "HERO is gebaseerd op SuperBetter, de methode van spelontwerper en psycholoog Jane McGonigal, toch?",
+        "prompt": "Curious, natural conversational question. Light upward intonation."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Ja. En daar zijn inzichten van gedragswetenschapper Wendy Wood aan toegevoegd, over hoe gewoontes werkelijk veranderen. Het gaat dus niet alleen over wat je graag zou willen doen, maar ook over hoe gedrag in de praktijk ontstaat.",
+        "prompt": "Clear, warm educational explanation. Measured pace with natural emphasis on key ideas."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "Dus HERO zegt eigenlijk niet: probeer harder.",
+        "prompt": "Curious and slightly playful, setting up the next response."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Nee. Het zegt: leer het spel begrijpen.",
+        "prompt": "Calm, confident, concise. Slight emphasis on 'leer het spel begrijpen'."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "Dat is wel een mooie verschuiving. Van jezelf beoordelen naar kijken wat er eigenlijk gebeurt.",
+        "prompt": "Warm and insightful, reflective tone."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "En daarom bestaat HERO uit vier stappen: Herken, Erken, Richt en Overwin. Die vier stappen komen steeds terug.",
+        "prompt": "Clear educational podcast delivery. Slight rhythmic emphasis on each of the four steps."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "Laten we die eens op Merel leggen.",
+        "prompt": "Inviting, conversational tone. Light and engaged."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Bij Herken kijkt ze eerst naar wat er werkelijk gebeurt. Het is niet simpelweg: ik ben lui. Het is: wanneer komt die gedachte op, wat gebeurt ervoor, en wat maakt het moeilijk om te gaan lopen?",
+        "prompt": "Patient, explanatory voice. Emphasize observation rather than judgment."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "En daarna Erken. Dus erkennen dat het op dat moment inderdaad lastig is, zonder jezelf daar meteen voor te veroordelen.",
+        "prompt": "Empathetic and reassuring, with a calm natural rhythm."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Juist. Daarna komt Richt. Dan ga je bepalen waar je je aandacht en actie op wilt richten. Niet op het perfecte resultaat, maar op de volgende speelbare stap.",
+        "prompt": "Encouraging and practical, warm educational tone. Gentle emphasis on 'volgende speelbare stap'."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "En Overwin klinkt alsof je dan meteen een enorme overwinning moet behalen.",
+        "prompt": "Lightly playful and curious, with a hint of humor."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Maar dat hoeft helemaal niet. Een overwinning kan juist klein zijn. Merel hoeft niet ineens iedere dag een half uur te lopen. Misschien is haar overwinning vandaag wel dat ze haar schoenen aantrekt en tien minuten naar buiten gaat.",
+        "prompt": "Warm, encouraging and grounded. Make the small example feel achievable and concrete."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "Dus het doel is niet om jezelf te dwingen een ander mens te worden.",
+        "prompt": "Reflective, conversational tone."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Nee. Het doel is begrijpen welk spel je nu speelt, en leren hoe je het anders kunt spelen.",
+        "prompt": "Calm, confident closing thought. Warm and quietly motivating."
+    },
+    {
+        "name": "Speaker_2",
+        "text": "En misschien is dat ook waarom een probleem juist een goed startpunt kan zijn.",
+        "prompt": "Reflective and warm, with a gentle downward intonation."
+    },
+    {
+        "name": "Speaker_1",
+        "text": "Precies. Want als iets niet werkt, heb je iets om te onderzoeken. En vanaf daar kun je beginnen met spelen.",
+        "prompt": "Warm, optimistic closing. Natural pace with a gentle sense of resolution."
+    }
+]
