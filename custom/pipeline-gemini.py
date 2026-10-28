@@ -48,7 +48,9 @@ class Settings(VActSettingsBase):
         self.trim_end = -0.142 #-3408#0.42 * 24000
         self.lang = "nl-NL"
         self.podcast = False
+        self.prompt_combine = False
         self.speakers = { "Speaker_1": "voice_9qsimytb9qxx", "Speaker_2": "voice_wejnkf7osuak" }
+        self.voice_map = { "mees": "voice_9qsimytb9qxx", "eveline": "voice_wejnkf7osuak", "merel": "voice_szfr4pdn04rc" }
 
 class VActGeminiPipeline(VActPipelineBase):
     def __init__(self):
@@ -80,7 +82,7 @@ class VActGeminiPipeline(VActPipelineBase):
         #         self.model_resolve(model_config, "pt", "yaml", "ascii", settings)
         _input = Path(self.format_input(settings.input, settings.name, settings.variant))
         print(_input.exists(),_input.is_dir(),_input.resolve())
-        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) ]
+        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) if os.path.isfile(f"{_input}/{p}") ]
 
         if not text_files:
             return False
@@ -111,7 +113,7 @@ class VActGeminiPipeline(VActPipelineBase):
                 #con_audio = None
                 #con_text = None
                 voice_key = settings.voice_key
-                speaker_name = settings.variant.replace('_', " ").strip().title()
+                speaker = speaker_name = settings.variant.replace('_', " ").strip().title()
                 _t0 = t0 = time.perf_counter()
                 if settings.ref_audio:
                     ref_audio, ref_sr = self.wav_as_b64(settings.ref_audio.replace("{variant}",settings.variant), settings.rate)
@@ -136,6 +138,7 @@ class VActGeminiPipeline(VActPipelineBase):
                         },
                     )
                     voice_key = voice.id if settings.store_voice else voice.key
+                    print(speaker_name, voice_key)
 
                 _config = { "speech_config": [{"voice": voice_key }] }
 
@@ -177,6 +180,12 @@ class VActGeminiPipeline(VActPipelineBase):
                                     "content": entry
                                 }]
                         else:
+                            _speaker = getattr(entry, settings.speaker_attr, settings.variant)
+                            if _speaker != settings.variant:
+                                speaker = _speaker.replace('_', " ").strip().title()
+                                _config = { "speech_config": [{"voice": getattr(settings.voice_map,"_speaker", voice_key) }] }
+                            
+                            prompt = getattr(entry, settings.prompt_attr, settings.prompt) if not settings.prompt_combine else f"{settings.prompt} {getattr(entry, settings.prompt_attr, '')}"
                             text = entry[settings.text_attr] if b_json else entry
                             _len += len(text)
 
@@ -187,8 +196,8 @@ class VActGeminiPipeline(VActPipelineBase):
                                 "text": text,
                                 "annotations": [{
                                     "type": "speech_metadata",
-                                    "speaker": speaker_name,
-                                    "style": settings.prompt
+                                    "speaker": speaker,
+                                    "style": prompt
                                 }] if settings.prompt else None
                             }]
 
