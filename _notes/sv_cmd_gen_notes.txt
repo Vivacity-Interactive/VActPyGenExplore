@@ -1,0 +1,39 @@
+python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/pre" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/sv/1_vo{variant}.mp3" --ref_text "../_in/text/sv/1_sample_eng.txt" --regex ".*_eng_.*\.txt" --prompt "<|emotion:sadness|>"
+
+python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/consent" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/sv/1_vo{variant}.mp3" --ref_text "../_in/text/sv/1_sample_eng.txt" --regex ".*_eng\.txt" --prompt "<|emotion:sadness|>"
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --name test --input "../_in/text/sv" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/pre/pre_sample_eng_3_vo{variant}.wav" --ref_consent "../_out/audio/consent/consent_vo_eng{variant}.wav" --store_voice true --regex ".*\.json"
+
+
+
+python .\pipeline-qwen3.py --config pipeline-qwen3.json --name leah --input "../_in/text/pre" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/pre/pre_sample_eng_1_vo{variant}.wav" --ref_text "../_in/text/pre/sample_eng_1.txt" --regex ".*_eng_.*.txt"
+
+python .\pipeline-qwen3.py --config pipeline-qwen3.json --name leah --input "../_in/text/consent" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/pre/pre_sample_eng_1_vo{variant}.wav" --ref_text "../_in/text/pre/sample_eng_1.txt" --regex ".*_eng\.txt"
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --name test --input "../_in/text/sv" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/pre/pre_sample_eng_1_vo_qwen{variant}.wav" --ref_consent "../_out/audio/consent/consent_vo_eng_qwen{variant}.wav" --store_voice true --regex ".*\.json"
+
+
+
+python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/pre" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/sv/2_vo{variant}.mp3" --ref_text "../_in/text/sv/2_sample_eng.txt" --regex ".*_eng_.*.txt" --prompt "<|emotion:sadness|>"
+
+python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/consent" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/sv/2_vo{variant}.mp3" --ref_text "../_in/text/sv/2_sample_eng.txt" --regex ".*_eng.txt" --prompt "<|emotion:sadness|>"
+
+
+
+
+python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/sv" --variant "_leah" --seed 987686789 --regex "3_sample_eng.txt" --prompt "<|emotion:sadness|>"
+
+
+python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/sv" --variant "_leah" --seed 987686789 --prompt_attr None --ref_audio "../_out/audio/sv/3_vo{variant}.mp3" --ref_text "../_in/text/sv/3_sample_eng.txt" --regex "3_sample_eng.txt" --prompt "<|emotion:enthusiasm|><|prosody:expressive_high|>" --temperature 0.9
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --name test --input "../_in/text/sv" --variant "_leah" --seed 987686789 --ref_audio "../_out/audio/pre/pre_sample_eng_3_vo{variant}.wav" --ref_consent "../_out/audio/consent/consent_vo_eng{variant}.wav" --store_voice true --regex "sv_01\.json"
+
+
+python .\pipeline-qwen3.py --config pipeline-qwen3.json --name leah --input "../_in/text/sv" --variant "_leah" --seed 987616759 --prompt_attr None --ref_audio "../_out/audio/sv/1_vo{variant}.mp3" --ref_text "../_in/text/sv/1_sample_eng.txt" --regex "3_sample_eng.txt" --temperature 0.7
+
+python .\pipeline-sawt4.py --config pipeline-sawt4.json --name leah --input "../_out/audio/sv" --variant "_leah" --seed 987616759
+
+
+
+
+python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/consent" --variant "_leah" --seed 987686789 --prompt_attr None --ref_audio "../_out/audio/sawt/leah/_restored/leah_restored_leah/1_vo{variant}.mp3" --ref_text "../_in/text/sv/1_sample_eng.txt" --regex ".*_eng\.txt" --prompt "<|emotion:enthusiasm|><|prosody:expressive_high|>" --temperature 0.9

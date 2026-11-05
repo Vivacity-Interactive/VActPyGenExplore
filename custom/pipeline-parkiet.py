@@ -36,6 +36,7 @@ class Settings(VActSettingsBase):
         self.pause = 0.08
         self.merge = True
         self.sliding = False
+        self.regex = ""
 
 class VActParkietPipeline(VActPipelineBase):
     def __init__(self):
@@ -56,7 +57,8 @@ class VActParkietPipeline(VActPipelineBase):
         #         self.model_resolve(model_config, "pt", "yaml", "ascii", settings)
         _input = Path(self.format_input(settings.input, settings.name, settings.variant))
         print(_input.exists(),_input.is_dir(),_input.resolve())
-        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) ]
+        regex = re.compile(settings.regex) if settings.regex else None
+        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) if not regex or regex.match(p) ]
 
         if not text_files:
             return False
@@ -109,7 +111,7 @@ class VActParkietPipeline(VActPipelineBase):
                         inputs = processor(
                             text=(settings.prompt + "\n\r" if settings.prompt else "") + ref_text + text,# + chunk,
                             audio=ref_audio,
-                            padding='max_length',
+                            #padding='max_length',
                             return_tensors="pt"
                         ).to(device)
 

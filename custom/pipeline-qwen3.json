@@ -1,0 +1,16 @@
+{
+  "title": "Qwen Audio TTS Pipeline",
+  "description": "",
+  "name": "qwen3_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "qwen_tts",
+      "repo_id": "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+      "fp": "fp16",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer"
+    }
+  ]
+}

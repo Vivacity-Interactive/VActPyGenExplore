@@ -23,7 +23,7 @@ class Settings(VActSettingsBase):
         super().__init__()
         self.guidance = 3.0
         self.temperature = 0.7
-        self.output = "../_out/audio/{stem}/gemini/{variant}/{id}{data}{variant}.mp3"
+        self.output = "../_out/audio/{stem}/gemini/{variant}/{index}_{id}{data}{variant}.mp3"
         self.variant = "_saskia"
         self.prompt = "warm and conversational"
         self.ref_audio = ""
@@ -33,7 +33,9 @@ class Settings(VActSettingsBase):
         self.merge_attr = 'id'
         self.text_attr = 'text'
         self.prompt_attr = "prompt"
-        self.speaker_attr ="name"
+        self.speaker_attr = "name"
+        self.lang_attr = "lang"
+        self.gender_attr = "gender"
         self.split = '\n\r'
         self.pause = 0.08
         self.merge = True
@@ -50,7 +52,10 @@ class Settings(VActSettingsBase):
         self.podcast = False
         self.prompt_combine = False
         self.speakers = { "Speaker_1": "voice_9qsimytb9qxx", "Speaker_2": "voice_wejnkf7osuak" }
-        self.voice_map = { "mees": "voice_9qsimytb9qxx", "eveline": "voice_wejnkf7osuak", "merel": "voice_szfr4pdn04rc" }
+        self.voice_map = { "mees": "voice_9qsimytb9qxx", "eveline": "voice_wejnkf7osuak", "merel": "voice_szfr4pdn04rc", "leah": "voice_hqayyjmjcn5t", "leah_evans_adult": "voice_2yqt07uf54jg" }
+        self.regex = ""
+        self.voice_design = True
+        self.gender = "female"
 
 class VActGeminiPipeline(VActPipelineBase):
     def __init__(self):
@@ -82,7 +87,8 @@ class VActGeminiPipeline(VActPipelineBase):
         #         self.model_resolve(model_config, "pt", "yaml", "ascii", settings)
         _input = Path(self.format_input(settings.input, settings.name, settings.variant))
         print(_input.exists(),_input.is_dir(),_input.resolve())
-        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) if os.path.isfile(f"{_input}/{p}") ]
+        regex = re.compile(settings.regex) if settings.regex else None
+        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) if os.path.isfile(f"{_input}/{p}") and (not regex or regex.match(p)) ]
 
         if not text_files:
             return False
@@ -101,6 +107,11 @@ class VActGeminiPipeline(VActPipelineBase):
                 api_key = os.getenv(api_key_var) if api_key_var else None
                 predictor = genai.Client()
 
+                _delete_voices = []
+                for _voice in _delete_voices:
+                    predictor.voices.delete(id=_voice)
+                    print("delete voice", _voice)
+
                 sample_rate = settings.rate
                 # silence = torch.zeros(
                 #     int(sample_rate * settings.pause),
@@ -113,7 +124,8 @@ class VActGeminiPipeline(VActPipelineBase):
                 #con_audio = None
                 #con_text = None
                 voice_key = settings.voice_key
-                speaker = speaker_name = settings.variant.replace('_', " ").strip().title()
+                _speaker = _variant = settings.variant.replace('_', " ").strip()
+                speaker = speaker_name = _speaker.title()
                 _t0 = t0 = time.perf_counter()
                 if settings.ref_audio:
                     ref_audio, ref_sr = self.wav_as_b64(settings.ref_audio.replace("{variant}",settings.variant), settings.rate)
@@ -180,13 +192,39 @@ class VActGeminiPipeline(VActPipelineBase):
                                     "content": entry
                                 }]
                         else:
-                            _speaker = getattr(entry, settings.speaker_attr, settings.variant)
-                            if _speaker != settings.variant:
-                                speaker = _speaker.replace('_', " ").strip().title()
-                                _config = { "speech_config": [{"voice": getattr(settings.voice_map,"_speaker", voice_key) }] }
+                            _speaker = entry.get(settings.speaker_attr, _speaker) if b_json else _speaker
+                            b_speaker = _speaker != _variant
+                            _lang = entry.get(settings.lang_attr, settings.lang) if b_json else settings.lang
+                            _gender = entry.get(settings.gender_attr, settings.gender) if b_json else settings.gender
+                            speaker = _speaker.replace('_', " ").strip().title() if b_speaker else speaker
+                            prompt = settings.prompt
+                            if b_json:
+                                prompt = entry.get(settings.prompt_attr, '') if not settings.prompt_combine else f"{settings.prompt} {entry.get(settings.prompt_attr, '')}"
                             
-                            prompt = getattr(entry, settings.prompt_attr, settings.prompt) if not settings.prompt_combine else f"{settings.prompt} {getattr(entry, settings.prompt_attr, '')}"
-                            text = entry[settings.text_attr] if b_json else entry
+                            if settings.voice_design and not _speaker in settings.voice_map:
+                                voice = predictor.voices.create(
+                                    store=settings.store_voice,
+                                    voice={
+                                        "model": "gemini-3.8-flash-tts",
+                                        "type": "prompted",
+                                        "display_name": speaker,
+                                        "gender": _gender,
+                                        "language_code": _lang,
+                                        "prompted": { "input": prompt },
+                                    },
+                                )
+                                voice_key = voice.id if settings.store_voice else voice.key
+                                settings.voice_map[_speaker] = voice_key
+                                print(speaker, voice_key)
+
+                            if b_speaker:
+                                _config = { "speech_config": [{"voice": getattr(settings.voice_map, _speaker, voice_key) }] }
+                            
+                            text = entry.get(settings.text_attr, None) if b_json else entry
+                            if not text:
+                                if settings.voice_design: print(settings.voice_map)
+                                print(" - skip", text_file)
+                                continue
                             _len += len(text)
 
                             #chuncks = split.split(text)
@@ -226,7 +264,7 @@ class VActGeminiPipeline(VActPipelineBase):
                             #audio = base64.b64decode(audio)
                             _merge = []
                             _len = 0
-                            _output = output.replace("{stem}", file_path.stem).replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
+                            _output = output.replace("{stem}", file_path.stem).replace("{id}", id).replace("{index}", f"{_index}")#.replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
                             if audio is not None:
                                 _output_vo = Path(_output.replace("{data}", "_vo"))
                                 _audio_path = settings.base_path / _output_vo
@@ -239,6 +277,13 @@ class VActGeminiPipeline(VActPipelineBase):
                                 print(True, len(audio), _len, _tn - _t0, f"f({index}/{len(text_files)})",f"t({_index}/{len(data)})", _audio_path.resolve())
                                 _t0 = _tn
                 print(_t0 - t0)
+
+                if settings.voice_design:
+                    response = predictor.voices.list(
+                        type_=["prompted", "replicated"]
+                    )
+                    for voice in response.voices or []: print("    ", voice.id, voice.display_name, voice.type)
+                    print(settings.voice_map)
         return True
 
 

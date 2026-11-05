@@ -19,3 +19,6 @@
 [submodule "_build/parkiet"]
 	path = _build/parkiet
 	url = https://github.com/pevers/parkiet.git
+[submodule "_build/qwen3-tts"]
+	path = _build/qwen3-tts
+	url = https://github.com/QwenLM/Qwen3-TTS.git

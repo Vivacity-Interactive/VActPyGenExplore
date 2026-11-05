@@ -221,6 +221,8 @@ venv
 /**/sim/**/*
 /**/text/**/*
 /**/data/**/*
+/**/_notes/**/*
+/**/_snap/**/*
 
 !/_build/**/*
 !/bin/**
@@ -245,3 +247,5 @@ venv
 #!/**/*.in
 #!/**/*.ascii
 #!/**/*.csv
+
+/**/checkpoint/**/*

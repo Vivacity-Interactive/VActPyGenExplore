@@ -1,0 +1,24 @@
+{
+  "title": "SAWT Audio Speech Restore Pipeline",
+  "description": "",
+  "name": "sawt4_pipeline",
+  "type": "custom",
+  "models": [
+    {
+      "type": "checkpoint",
+      "name": "sawt4",
+      "repo_id": "Quran-Lab/sawt-v4",
+      "fp": "bf16",
+      "api_key_var": "HF_API_KEY",
+      "auth_type": "bearer",
+      "snap_shot": [
+        "sawt2/*", 
+        "config.json", 
+        "requirements.txt",
+        "generator.pt", 
+        "anchor.pt", 
+        "vae48_dacvae_d2.pt"
+      ]
+    }
+  ]
+}

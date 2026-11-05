@@ -1,5 +1,10 @@
 import torch, sys, json, os, soundfile, time, re
 from pathlib import Path
+
+import transformers
+print("Transformers:", transformers.__version__)
+print("Path:", transformers.__file__)
+
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import signal
@@ -30,11 +35,13 @@ class Settings(VActSettingsBase):
         self.untill = -1
         self.merge_attr = 'id'
         self.text_attr = 'text'
+        self.prompt_attr = 'prompt'
         self.split = '\n\r'
         self.pause = 0.08
         self.merge = True
         self.continuity = True
         self.sliding = False
+        self.regex = ""
 
 class VActHiggs3Pipeline(VActPipelineBase):
     def __init__(self):
@@ -55,7 +62,8 @@ class VActHiggs3Pipeline(VActPipelineBase):
         #         self.model_resolve(model_config, "pt", "yaml", "ascii", settings)
         _input = Path(self.format_input(settings.input, settings.name, settings.variant))
         print(_input.exists(),_input.is_dir(),_input.resolve())
-        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) ]
+        regex = re.compile(settings.regex) if settings.regex else None
+        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) if not regex or regex.match(p) ]
 
         if not text_files:
             return False
@@ -73,8 +81,8 @@ class VActHiggs3Pipeline(VActPipelineBase):
                 api_key_var = model_config.get("api_key_var")
                 api_key = os.getenv(api_key_var) if api_key_var else None
                 device = torch.device(device_type)
-                tokenizer = AutoTokenizer.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key)
-                predictor  = AutoModelForCausalLM.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key).to(device)
+                tokenizer = AutoTokenizer.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, token=api_key, force_download=settings.redownload, extra_special_tokens = {})
+                predictor  = AutoModelForCausalLM.from_pretrained(str(model_config["repo_id"]), trust_remote_code=True, force_download=settings.redownload, token=api_key).to(device)
 
                 sample_rate = predictor.config.sample_rate
                 # silence = torch.zeros(
@@ -89,6 +97,7 @@ class VActHiggs3Pipeline(VActPipelineBase):
                 #con_text = None
                 ref_audio = None
                 ref_text = ""
+                ref_sr = None
                 _t0 = t0 = time.perf_counter()
                 if settings.ref_audio:
                     #ref_audio, ref_sr = torchaudio.load(settings.ref_audio.replace("{variant}",settings.variant))
@@ -111,13 +120,14 @@ class VActHiggs3Pipeline(VActPipelineBase):
 
                         text = entry[settings.text_attr] if b_json else entry
                         id = entry[settings.merge_attr] if b_json and settings.merge_attr else None
-
+                        prompt = (getattr(entry,settings.prompt_attr, "") if b_json and settings.prompt_attr else "") + (settings.prompt if settings.prompt else "")
                         #chuncks = split.split(text)
                         #for index_, chunk in enumerate(chuncks):
-                        
+                        _text = prompt + text
+                        #print("text -- ",_text)
                         _audio = predictor.generate_speech(
                             #text,
-                            (settings.prompt if settings.prompt else "") + text,
+                            _text,
                             tokenizer,
                             reference_audio=ref_audio,
                             reference_text=ref_text,

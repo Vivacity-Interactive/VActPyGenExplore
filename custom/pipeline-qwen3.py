@@ -1,0 +1,167 @@
+import torch, sys, json, os, soundfile, time, re
+from pathlib import Path
+import numpy as np
+
+import sys
+sys.path.insert(0, r"C:\_Gen\_build\qwen3-tts\build\_packages")
+import transformers
+print("Transformers:", transformers.__version__)
+print("Path:", transformers.__file__)
+
+from qwen_tts import Qwen3TTSModel
+
+import signal
+
+if not hasattr(signal, "SIGALRM"):
+    signal.SIGALRM = signal.SIGABRT
+if not hasattr(signal, "alarm"):
+    signal.alarm = lambda seconds: None
+
+if __name__ == "__main__":
+    common_path = sys.path.append(str(Path(__file__).resolve().parent.parent))
+    if str(common_path) not in sys.path:
+        sys.path.append(str(common_path))
+
+from vact import VActPipelineBase, VActSettingsBase
+
+class Settings(VActSettingsBase):
+    def __init__(self):
+        super().__init__()
+        self.guidance = 3.0
+        self.temperature = 0.7
+        self.output = "../_out/audio/{stem}/qwen/{id}{data}{variant}.mp3"
+        self.variant = "_saskia"
+        self.prompt = "<|emotion:enthusiasm|>"
+        self.ref_audio = ""
+        self.ref_text = ""
+        self.skip = -1
+        self.untill = -1
+        self.merge_attr = 'id'
+        self.text_attr = 'text'
+        self.prompt_attr = 'prompt'
+        self.lang_attr="lang"
+        self.split = '\n\r'
+        self.pause = 0.08
+        self.merge = True
+        self.continuity = True
+        self.sliding = False
+        self.regex = ""
+        self.lang="English"
+
+class VActQwen3Pipeline(VActPipelineBase):
+    def __init__(self):
+        super().__init__()
+
+    def execute(self, settings):
+        with open(settings.config) as file:
+            pipeline_config = json.load(file)
+
+        if not pipeline_config["type"] == "custom":
+            print(f"{pipeline_config["type"]} is not custom pipeline")
+            return False
+
+        ## move to base pipeline
+        # for model_config in pipeline_config['models']:
+        #     repro = model_config.get("repro")
+        #     if not repro:
+        #         self.model_resolve(model_config, "pt", "yaml", "ascii", settings)
+        _input = Path(self.format_input(settings.input, settings.name, settings.variant))
+        print(_input.exists(),_input.is_dir(),_input.resolve())
+        regex = re.compile(settings.regex) if settings.regex else None
+        text_files = [ f"{_input}/{p}" for p in os.listdir(_input) if not regex or regex.match(p) ]
+
+        if not text_files:
+            return False
+
+        ## pipe = None
+        pipe_index = -1
+        for model_config in pipeline_config["models"]:
+            pipe_index += 1
+            fp_mode = model_config.get("fp", "fp16")
+            torch_dtype = self.map_dtype.get(fp_mode, torch.float16)
+            _type = model_config["type"]
+            device_type = settings.device_override if settings.device_override else model_config.get("device", None)
+            
+            if _type in {"checkpoint"}:
+                api_key_var = model_config.get("api_key_var")
+                api_key = os.getenv(api_key_var) if api_key_var else None
+                device = torch.device(device_type)
+                predictor  = Qwen3TTSModel.from_pretrained(str(model_config["repo_id"]), device_map=str(device), dtype=torch_dtype, trust_remote_code=True, force_download=settings.redownload, local_files_only=settings.local_files, token=api_key)
+
+                #sample_rate = predictor.config.sample_rate
+                # silence = torch.zeros(
+                #     int(sample_rate * settings.pause),
+                #     dtype=torch.float32,
+                #     device=device
+                # )
+
+                split = re.compile(f"[{re.escape(settings.split)}]")
+                
+                #con_audio = None
+                #con_text = None
+                ref_audio = None
+                ref_text = ""
+                ref_sr = None
+                _t0 = t0 = time.perf_counter()
+                if settings.ref_audio:
+                    #ref_audio, ref_sr = torchaudio.load(settings.ref_audio.replace("{variant}",settings.variant))
+                    ref_audio, ref_sr = soundfile.read(settings.ref_audio.replace("{variant}",settings.variant), dtype="float32")
+                    #ref_audio = torch.from_numpy(ref_audio)
+                    #if ref_audio.ndim > 1: ref_audio = ref_audio.mean(dim=1)
+                    ref_text = Path(settings.ref_text).read_text(encoding="utf-8").strip() + " "
+
+                output = self.format_output(settings.output, settings.name, settings.variant, pipe_index)
+                for index, text_file in enumerate(text_files):
+                    file_path = Path(text_file)
+                    b_json = file_path.suffix.lower() == ".json"
+                    _raw = file_path.read_text(encoding="utf-8").strip()
+                    data = json.loads(_raw) if b_json else [_raw]
+                    #_id = data[0].get(settings.merge_attr) if data and isinstance(data[0], dict) else None
+                    _merge = []
+                    for _index, entry in enumerate(data):
+                        b_skip = (settings.untill > 0 and _index > settings.untill) or settings.skip > _index
+                        if b_skip: continue;
+
+                        text = entry[settings.text_attr] if b_json else entry
+                        id = entry[settings.merge_attr] if b_json and settings.merge_attr else None
+                        #prompt = (getattr(entry,settings.prompt_attr, "") if b_json and settings.prompt_attr else "") + (settings.prompt if settings.prompt else "")
+                        lang = getattr(entry,settings.lang_attr, settings.lang) if b_json and settings.lang_attr else settings.lang
+                        #chuncks = split.split(text)
+                        #for index_, chunk in enumerate(chuncks):
+                        #_text = prompt + text
+                        #print("text -- ",_text)
+                        wavs, sample_rate = predictor.generate_voice_clone(
+                            #text,
+                            text=text,
+                            language=lang,
+                            ref_audio=(ref_audio, ref_sr),
+                            ref_text=ref_text,
+                            temperature=settings.temperature,
+                            max_new_tokens=settings.max_tokens
+                        )
+
+                        _audio = wavs[0]
+
+                        b_write = (not settings.merge) or (settings.merge and ( (_index + 1) >= len(data) or data[_index + 1].get(settings.merge_attr) != id))
+                        if not b_write: _merge.append(_audio)
+                        else:
+                            _merge.append(_audio)
+                            audio = _audio if not settings.merge else np.concatenate(_merge)
+                            _merge = []
+                            _output = output.replace("{stem}", file_path.stem).replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
+                            if audio is not None:
+                                _output_vo = Path(_output.replace("{data}", "_vo"))
+                                _audio_path = settings.base_path / _output_vo
+                                _audio_path.parent.mkdir(parents=True, exist_ok=True)
+                                soundfile.write(_audio_path, audio, sample_rate)
+                                _tn =  time.perf_counter()
+                                print(True, audio.shape, len(text), _tn - _t0, f"f({index}/{len(text_files)})",f"t({_index}/{len(data)})", _audio_path.resolve())
+                                _t0 = _tn
+                print(_t0 - t0)
+        return True
+
+
+if __name__ == "__main__":
+    settings = Settings()
+    pipeline = VActQwen3Pipeline()
+    pipeline.cmd_execute(settings)

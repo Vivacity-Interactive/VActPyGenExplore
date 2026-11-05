@@ -1,4 +1,4 @@
-import json, argparse, requests, torch, uuid, base64, os, math, cv2, time, keyboard, uuid
+import json, argparse, requests, torch, uuid, base64, os, math, cv2, time, keyboard, uuid, sys
 from datetime import datetime
 from pathlib import Path
 from tqdm import tqdm
@@ -23,6 +23,8 @@ class VActSettingsBase:
         self.device_override = "cuda"
         self.seed = 12345
         self.interactive = False
+        self.local_files = False
+        self.max_tokens = 2048
 
 class VActPipe:
     def __init__(self, context, config, callback):
@@ -119,12 +121,21 @@ class VActPipelineBase:
 
         return model_config
 
+    def get_model_path(self, model_config, settings, b_sys_path=False):
+        model_dir = Path(f"{settings.base_path}/{model_config["type"]}")
+        path = model_dir / f"{model_config['name']}"
+        if b_sys_path:
+            _path = str(path)
+            if _path not in sys.path:
+                sys.path.insert(0, _path)
+        return path
+
     def format_input(self, input, name, variant="", pipe = -1, data="", index = -1):
         return (input
             .replace("{name}", name)
             .replace("{variant}", variant)
-            .replace("{pipe}", str(pipe))
-            .replace("{index}", str(index)))
+            .replace("{pipe}", str(pipe)))
+            #.replace("{index}", str(index)))
 
     def format_output(self, output, name, variant="", pipe = -1, data="", index = -1):
         return (output
@@ -132,8 +143,8 @@ class VActPipelineBase:
             .replace("{datetime}", datetime.now().strftime("%Y%m%d_%H%M%S"))
             .replace("{name}", name)
             .replace("{variant}", variant)
-            .replace("{pipe}", str(pipe))
-            .replace("{index}", str(index)))
+            .replace("{pipe}", str(pipe)))
+            #.replace("{index}", str(index)))
 
     def match_resize(self, width, height, b_aspect=True, multiple=64):
         aspect = width / height if b_aspect else 1.0

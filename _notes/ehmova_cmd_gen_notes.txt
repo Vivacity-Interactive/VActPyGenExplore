@@ -1,0 +1,25 @@
+## --skip 2 --untill 3
+
+Copy-Item -Path "C:\Repositories\eva-next-node\src\_course\**\*_text.json" -Destination "_in/text" -Recurse
+
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}" --variant "_eveline" --seed 987686789 --voice_key voice_9qsimytb9qxx --name 5833fc91-6959-4048-8151-dddc6000adf2
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}" --variant "_mees" --seed 987686789 --voice_key voice_wejnkf7osuak --name 5833fc91-6959-4048-8151-dddc6000adf2 
+
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}" --variant "_eveline" --seed 987686789 --voice_key voice_9qsimytb9qxx --name c0b9d3ed-93c6-4af8-9408-fd5c73f09d47
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}" --variant "_mees" --seed 987686789 --voice_key voice_wejnkf7osuak --name c0b9d3ed-93c6-4af8-9408-fd5c73f09d47 
+
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}" --variant "_eveline" --seed 987686789 --voice_key voice_9qsimytb9qxx --name eabfc26c-21a4-4db6-85e5-3252713103d8
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}" --variant "_mees" --seed 987686789 --voice_key voice_wejnkf7osuak --name eabfc26c-21a4-4db6-85e5-3252713103d8
+
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}\assets" --variant "_merel" --seed 987686789 --voice_key voice_szfr4pdn04rc --name 5833fc91-6959-4048-8151-dddc6000adf2 --output "C:\_Gen\_out\audio\{name}\assets\{stem}\gemini\{variant}\{stem}_{id}{data}{variant}.mp3"
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}\assets" --variant "_merel" --seed 987686789 --voice_key voice_szfr4pdn04rc --name c0b9d3ed-93c6-4af8-9408-fd5c73f09d47 --output "C:\_Gen\_out\audio\{name}\assets\{stem}\gemini\{variant}\{stem}_{id}{data}{variant}.mp3"
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --input "C:\_Gen\_in\text\dialogues\{name}\assets" --variant "_merel" --seed 987686789 --voice_key voice_szfr4pdn04rc --name eabfc26c-21a4-4db6-85e5-3252713103d8 --output "C:\_Gen\_out\audio\{name}\assets\{stem}\gemini\{variant}\{stem}_{id}{data}{variant}.mp3"
