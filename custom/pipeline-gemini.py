@@ -53,8 +53,7 @@ class Settings(VActSettingsBase):
         self.prompt_combine = False
         self.speakers = { "Speaker_1": "voice_9qsimytb9qxx", "Speaker_2": "voice_wejnkf7osuak" }
         self.voice_map = { "mees": "voice_9qsimytb9qxx", "eveline": "voice_wejnkf7osuak", "merel": "voice_szfr4pdn04rc", "leah": "voice_hqayyjmjcn5t", "leah_evans_adult": "voice_2yqt07uf54jg" }
-        self.regex = ""
-        self.voice_design = True
+        self.voice_design = False
         self.gender = "female"
 
 class VActGeminiPipeline(VActPipelineBase):
@@ -264,7 +263,7 @@ class VActGeminiPipeline(VActPipelineBase):
                             #audio = base64.b64decode(audio)
                             _merge = []
                             _len = 0
-                            _output = output.replace("{stem}", file_path.stem).replace("{id}", id).replace("{index}", f"{_index}")#.replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
+                            _output = output.replace("{stem}", file_path.stem).replace("{id}", f"{id}").replace("{index}", f"{_index}")#.replace("{id}", f"{_index}_{id}")#.replace("{id}", id if id else settings.name)
                             if audio is not None:
                                 _output_vo = Path(_output.replace("{data}", "_vo"))
                                 _audio_path = settings.base_path / _output_vo

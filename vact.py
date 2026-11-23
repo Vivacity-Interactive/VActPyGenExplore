@@ -25,6 +25,7 @@ class VActSettingsBase:
         self.interactive = False
         self.local_files = False
         self.max_tokens = 2048
+        self.regex = ""
 
 class VActPipe:
     def __init__(self, context, config, callback):

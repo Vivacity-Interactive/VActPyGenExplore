@@ -37,3 +37,7 @@ python .\pipeline-sawt4.py --config pipeline-sawt4.json --name leah --input "../
 
 
 python .\pipeline-higgs3.py --config pipeline-higgs3.json --name leah --input "../_in/text/consent" --variant "_leah" --seed 987686789 --prompt_attr None --ref_audio "../_out/audio/sawt/leah/_restored/leah_restored_leah/1_vo{variant}.mp3" --ref_text "../_in/text/sv/1_sample_eng.txt" --regex ".*_eng\.txt" --prompt "<|emotion:enthusiasm|><|prosody:expressive_high|>" --temperature 0.9
+
+
+
+python .\pipeline-gemini.py --config pipeline-gemini.json --name test --input "../_in/text/sv" --variant "_leah" --seed 987686789 --store_voice true --regex ".*_story_draft_1\.json"
